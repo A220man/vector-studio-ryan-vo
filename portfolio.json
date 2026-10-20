@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "vector-studio-ryan-vo",
+  "owner": "A220man",
+  "email": "ryandtvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "summary": "Work in progress: vector-studio-ryan-vo",
+  "workflows": [
+    "Create and validate AI agent hook configurations against Agent Plugins schema",
+    "Analyze session transcripts for hook execution patterns and skipped handlers",
+    "Detect cross-platform line ending issues (CRLF/LF) in configuration files"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "status": "work-in-progress"
+}

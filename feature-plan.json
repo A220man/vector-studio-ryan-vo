@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "current_feature": "project-skeleton",
+  "features": [
+    {
+      "id": "project-skeleton",
+      "title": "Project skeleton with FastAPI backend and React frontend",
+      "status": "done",
+      "acceptance": [
+        "FastAPI app starts and serves health endpoint",
+        "React app builds and serves frontend",
+        "Docker compose brings up backend, frontend, and Keycloak",
+        "Basic OIDC authentication flow configured"
+      ],
+      "implementation": [
+        "backend/app/main.py",
+        "backend/app/core/config.py",
+        "backend/app/api/health.py",
+        "backend/requirements.txt",
+        "frontend/package.json",
+        "frontend/src/main.tsx",
+        "frontend/src/App.tsx",
+        "docker-compose.yaml",
+        "Dockerfile.backend",
+        "Dockerfile.frontend"
+      ],
+      "tests": [
+        "backend/tests/test_health.py",
+        "frontend/src/App.test.tsx"
+      ]
+    },
+    {
+      "id": "auth-oidc",
+      "title": "OIDC authentication with Keycloak",
+      "status": "planned",
+      "acceptance": [
+        "Login redirects to Keycloak",
+        "Callback exchanges code for tokens",
+        "Protected endpoints require valid token",
+        "Logout clears session"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "agent-config-manager",
+      "title": "AI agent configuration management (core domain engine)",
+      "status": "planned",
+      "acceptance": [
+        "Create/read/update/delete agent configurations",
+        "Validate hook schemas and configurations",
+        "Import/export configurations",
+        "Search and filter configurations"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "hook-validation-engine",
+      "title": "Hook schema validation engine",
+      "status": "planned",
+      "acceptance": [
+        "Validate Agent Plugins schema compliance",
+        "Detect CRLF/line ending issues",
+        "Check hook event ordering and conflicts",
+        "Report validation errors with actionable messages"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "session-analyzer",
+      "title": "Session transcript analysis workflow",
+      "status": "planned",
+      "acceptance": [
+        "Parse transcript files",
+        "Extract hook execution patterns",
+        "Identify skipped/failed hooks",
+        "Generate session quality report"
+      ],
+      "implementation": [],
+      "tests": []
+    }
+  ]
+}
