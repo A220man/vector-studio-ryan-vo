@@ -3,6 +3,7 @@ import { Dashboard } from './components/Dashboard'
 import { Login } from './components/Login'
 import { Callback } from './components/Callback'
 import { Settings } from './components/Settings'
+import { Configs } from './components/Configs'
 import { useAuth } from './hooks/useAuth'
 import { AuthProvider } from './hooks/AuthContext'
 
@@ -44,6 +45,11 @@ function AppRoutes() {
           <Dashboard />
         </PrivateRoute>
       } />
+      <Route path="/configs" element={
+        <PrivateRoute>
+          <Configs />
+        </PrivateRoute>
+      } />
       <Route path="/settings" element={
         <PrivateRoute>
           <Settings />
@@ -63,6 +69,7 @@ function App() {
             <h1 className="logo">Vector Studio</h1>
             <nav className="nav">
               <a href="/" className="nav-link">Dashboard</a>
+              <a href="/configs" className="nav-link">Configurations</a>
               <a href="/settings" className="nav-link">Settings</a>
             </nav>
           </div>

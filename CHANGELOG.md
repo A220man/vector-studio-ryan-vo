@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.0.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
@@ -31,3 +35,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PKCE for OIDC flow
 - CORS restricted to configured origins
 - No hardcoded secrets
+
+## [1.1.0] - 2026-10-23
+
+### Added
+- Complete OIDC authentication with Keycloak token exchange
+- Backend auth service with JWKS caching and RS256 token validation
+- User model with Keycloak ID, roles, and session management
+- Protected API endpoints with Bearer token authentication
+- Agent configuration CRUD API (create, read, update, delete, list, search)
+- Frontend Configs page with full CRUD UI
+- AuthContext token exchange and access token storage
+- Typed API client with automatic token injection
+- Backend tests for auth endpoints and auth service
+- Frontend build and tests pass
+
+### Fixed
+- datetime.utcnow() deprecation warnings (use timezone-aware datetime.now(timezone.utc))
+- TypeScript strict mode compliance in React components

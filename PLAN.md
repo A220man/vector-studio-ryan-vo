@@ -4,7 +4,7 @@ Each round completes one feature or repair. Future items are planned, not implem
 
 ## Current round
 
-project-skeleton
+auth-oidc
 
 ## Roadmap
 
@@ -24,13 +24,17 @@ Tests: `backend/tests/test_health.py`, `frontend/src/App.test.tsx`
 
 ### auth-oidc — OIDC authentication with Keycloak
 
-Status: planned
+Status: done
 
 Acceptance:
 - Login redirects to Keycloak
 - Callback exchanges code for tokens
 - Protected endpoints require valid token
 - Logout clears session
+
+Implementation: `backend/app/core/auth.py`, `backend/app/core/models.py`, `backend/app/api/auth.py`, `backend/app/api/configs.py`, `frontend/src/hooks/AuthContext.tsx`, `frontend/src/components/Callback.tsx`, `frontend/src/components/Configs.tsx`, `frontend/src/api/client.ts`, `frontend/src/App.tsx`
+
+Tests: `backend/tests/test_auth_configs.py`, `frontend/src/App.test.tsx`
 
 ### agent-config-manager — AI agent configuration management (core domain engine)
 
