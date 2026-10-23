@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 
 export function Callback() {
   const navigate = useNavigate()
-  const { setUser } = useAuth()
+  const { exchangeCodeForToken, setUser } = useAuth()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -22,19 +22,15 @@ export function Callback() {
       return
     }
 
-    // In a real implementation, exchange code for tokens with backend
-    // For now, create a mock user session
-    const mockUser = {
-      id: '1',
-      username: 'demo-user',
-      email: 'demo@example.com',
-      roles: ['viewer'],
-    }
-    
-    sessionStorage.setItem('user', JSON.stringify(mockUser))
-    setUser(mockUser)
-    navigate('/')
-  }, [navigate, setUser])
+    exchangeCodeForToken(code).then((user: any) => {
+      if (user) {
+        setUser(user)
+        navigate('/')
+      } else {
+        navigate('/login?error=token_exchange_failed')
+      }
+    })
+  }, [navigate, exchangeCodeForToken, setUser])
 
   return (
     <div className="loading">

@@ -1,0 +1,77 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: vector-studio-keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_USER: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: dev-file
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    command: start-dev --import-realm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: vector-studio-backend
+    environment:
+      DATABASE_URL: sqlite:///./data/vector_studio.db
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      OIDC_ENABLED: "true"
+      OIDC_CLIENT_ID: vector-studio
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_ISSUER_URL: http://keycloak:8080/realms/vector-studio
+      OIDC_REDIRECT_URI: http://localhost:5173/callback
+      OIDC_LOGOUT_URI: http://localhost:5173
+      CORS_ORIGINS: '["http://localhost:5173", "http://localhost:3000"]'
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai-compatible}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - backend_data:/app/data
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: vector-studio-frontend
+    environment:
+      VITE_OIDC_CLIENT_ID: vector-studio
+      VITE_OIDC_ISSUER_URL: http://localhost:8080/realms/vector-studio
+      VITE_OIDC_REDIRECT_URI: http://localhost:5173/callback
+      VITE_OIDC_LOGOUT_URI: http://localhost:5173
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  keycloak_data:
+  backend_data:

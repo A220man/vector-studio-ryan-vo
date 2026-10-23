@@ -1,0 +1,41 @@
+[project]
+name = "vector-studio-ryan-vo"
+version = "1.0.0"
+description = "AI Agent Configuration Manager - Vector Studio"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    {name = "Ryan Vo", email = "ryandtvo@gmail.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "fastapi==0.115.0",
+    "uvicorn[standard]==0.32.0",
+    "sqlalchemy==2.0.35",
+    "pydantic==2.9.2",
+    "pydantic-settings==2.5.2",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "python-multipart==0.0.9",
+    "httpx==0.27.2",
+]
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.3",
+    "pytest-asyncio==0.23.7",
+]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"

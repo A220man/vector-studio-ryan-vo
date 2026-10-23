@@ -17,7 +17,9 @@ export function Dashboard() {
       <div className="dashboard-grid">
         <div className="card">
           <h3>Agent Configurations</h3>
-          <p className="empty">No configurations yet. Create your first agent configuration.</p>
+          <Link to="/configs" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+            View Configurations
+          </Link>
           <Link to="/config/new" className="btn btn-primary" style={{ marginTop: '1rem' }}>
             Create Configuration
           </Link>

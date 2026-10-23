@@ -14,6 +14,7 @@ interface AuthContextType {
   login: () => void
   logout: () => void
   setUser: (user: User | null) => void
+  exchangeCodeForToken: (code: string) => Promise<User | null>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -22,6 +23,8 @@ function getEnv(key: string, fallback: string): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (import.meta as any).env?.[key] ?? fallback
 }
+
+const API_BASE = getEnv('VITE_API_BASE', '')
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -48,12 +51,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = `${issuer}/protocol/openid-connect/auth?${params.toString()}`
   }
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null)
     sessionStorage.removeItem('user')
     const issuer = getEnv('VITE_OIDC_ISSUER_URL', 'http://localhost:8080/realms/vector-studio')
     const redirectUri = getEnv('VITE_OIDC_LOGOUT_URI', 'http://localhost:5173')
     window.location.href = `${issuer}/protocol/openid-connect/logout?post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`
+  }
+
+  const exchangeCodeForToken = async (code: string): Promise<User | null> => {
+    const redirectUri = getEnv('VITE_OIDC_REDIRECT_URI', 'http://localhost:5173/callback')
+    try {
+      const response = await fetch(`${API_BASE}/auth/callback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, redirect_uri: redirectUri }),
+      })
+      if (!response.ok) {
+        throw new Error('Token exchange failed')
+      }
+      const data = await response.json()
+      const userData: User = {
+        id: String(data.user.id),
+        username: data.user.username,
+        email: data.user.email,
+        roles: data.user.roles,
+      }
+      sessionStorage.setItem('user', JSON.stringify(userData))
+      sessionStorage.setItem('access_token', data.access_token)
+      return userData
+    } catch (error) {
+      console.error('Token exchange error:', error)
+      return null
+    }
   }
 
   const value = {
@@ -63,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     setUser,
+    exchangeCodeForToken,
   }
 
   return (
