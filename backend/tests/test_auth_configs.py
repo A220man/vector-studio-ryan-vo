@@ -81,6 +81,299 @@ class TestConfigEndpoints:
         assert response.status_code == 401
 
 
+class TestConfigCRUD:
+    @pytest.fixture(autouse=True)
+    async def cleanup_db(self):
+        """Clean up database before each test."""
+        from app.core.database import SessionLocal
+        from app.core.models import AgentConfig, User
+        db = SessionLocal()
+        try:
+            db.query(AgentConfig).delete()
+            # Don't delete the test user (id=1)
+            db.query(User).filter(User.id != 1).delete()
+            db.commit()
+        finally:
+            db.close()
+        yield
+        # Cleanup after test too
+        db = SessionLocal()
+        try:
+            db.query(AgentConfig).delete()
+            db.query(User).filter(User.id != 1).delete()
+            db.commit()
+        finally:
+            db.close()
+
+    @pytest.fixture
+    async def auth_client(self):
+        """Create an authenticated client with a test user in the database."""
+        from app.core.auth import AuthService
+        from app.core.models import User
+        from app.core.database import SessionLocal
+        
+        # Create user in database
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.id == 1).first()
+            if not user:
+                user = User(
+                    id=1,
+                    keycloak_id="test-keycloak-id",
+                    username="testuser",
+                    email="test@example.com",
+                    roles='["viewer"]'
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            user_id = user.id
+        finally:
+            db.close()
+        
+        # Create token
+        from unittest.mock import MagicMock
+        mock_user = MagicMock(spec=User)
+        mock_user.id = user_id
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.get_roles.return_value = ["viewer"]
+        
+        token = AuthService.create_access_token(mock_user)
+        
+        client = AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
+        client.headers.update({"Authorization": f"Bearer {token}"})
+        yield client
+        await client.aclose()
+
+    @pytest.mark.asyncio
+    async def test_create_config(self, auth_client: AsyncClient):
+        response = await auth_client.post("/configs", json={
+            "name": "Test Config",
+            "description": "A test configuration",
+            "config_data": '{"model": "gpt-4", "temperature": 0.7}'
+        })
+        assert response.status_code == 201
+        data = response.json()
+        assert data["name"] == "Test Config"
+        assert data["description"] == "A test configuration"
+        assert data["config_data"] == '{"model": "gpt-4", "temperature": 0.7}'
+        assert "id" in data
+        assert "created_at" in data
+        assert "updated_at" in data
+
+    @pytest.mark.asyncio
+    async def test_create_config_invalid_json(self, auth_client: AsyncClient):
+        response = await auth_client.post("/configs", json={
+            "name": "Test Config",
+            "config_data": "not valid json"
+        })
+        assert response.status_code == 400
+        assert "Invalid JSON" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_list_configs(self, auth_client: AsyncClient):
+        # Create a few configs
+        await auth_client.post("/configs", json={
+            "name": "Config 1",
+            "config_data": '{}'
+        })
+        await auth_client.post("/configs", json={
+            "name": "Config 2",
+            "config_data": '{}'
+        })
+        
+        response = await auth_client.get("/configs")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 2
+        assert len(data["items"]) == 2
+        assert data["page"] == 1
+        assert data["limit"] == 20
+
+    @pytest.mark.asyncio
+    async def test_list_configs_with_search(self, auth_client: AsyncClient):
+        await auth_client.post("/configs", json={
+            "name": "Alpha Config",
+            "config_data": '{}'
+        })
+        await auth_client.post("/configs", json={
+            "name": "Beta Config",
+            "config_data": '{}'
+        })
+        await auth_client.post("/configs", json={
+            "name": "Gamma Config",
+            "config_data": '{}'
+        })
+        
+        response = await auth_client.get("/configs?search=Alpha")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 1
+        assert data["items"][0]["name"] == "Alpha Config"
+
+    @pytest.mark.asyncio
+    async def test_list_configs_pagination(self, auth_client: AsyncClient):
+        for i in range(5):
+            await auth_client.post("/configs", json={
+                "name": f"Config {i}",
+                "config_data": '{}'
+            })
+        
+        response = await auth_client.get("/configs?page=1&limit=2")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 5
+        assert len(data["items"]) == 2
+        assert data["page"] == 1
+        assert data["limit"] == 2
+        
+        response = await auth_client.get("/configs?page=2&limit=2")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 2
+        assert data["page"] == 2
+
+    @pytest.mark.asyncio
+    async def test_get_config(self, auth_client: AsyncClient):
+        create_resp = await auth_client.post("/configs", json={
+            "name": "Test Config",
+            "config_data": '{"key": "value"}'
+        })
+        config_id = create_resp.json()["id"]
+        
+        response = await auth_client.get(f"/configs/{config_id}")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == config_id
+        assert data["name"] == "Test Config"
+        assert data["config_data"] == '{"key": "value"}'
+
+    @pytest.mark.asyncio
+    async def test_get_config_not_found(self, auth_client: AsyncClient):
+        response = await auth_client.get("/configs/99999")
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_update_config(self, auth_client: AsyncClient):
+        create_resp = await auth_client.post("/configs", json={
+            "name": "Original Name",
+            "description": "Original description",
+            "config_data": '{"version": 1}'
+        })
+        config_id = create_resp.json()["id"]
+        
+        response = await auth_client.put(f"/configs/{config_id}", json={
+            "name": "Updated Name",
+            "config_data": '{"version": 2}'
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["name"] == "Updated Name"
+        assert data["description"] == "Original description"
+        assert data["config_data"] == '{"version": 2}'
+
+    @pytest.mark.asyncio
+    async def test_update_config_partial(self, auth_client: AsyncClient):
+        create_resp = await auth_client.post("/configs", json={
+            "name": "Original Name",
+            "description": "Original description",
+            "config_data": '{"version": 1}'
+        })
+        config_id = create_resp.json()["id"]
+        
+        response = await auth_client.put(f"/configs/{config_id}", json={
+            "description": "Only description updated"
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["name"] == "Original Name"
+        assert data["description"] == "Only description updated"
+        assert data["config_data"] == '{"version": 1}'
+
+    @pytest.mark.asyncio
+    async def test_update_config_invalid_json(self, auth_client: AsyncClient):
+        create_resp = await auth_client.post("/configs", json={
+            "name": "Test",
+            "config_data": '{}'
+        })
+        config_id = create_resp.json()["id"]
+        
+        response = await auth_client.put(f"/configs/{config_id}", json={
+            "config_data": "invalid json"
+        })
+        assert response.status_code == 400
+        assert "Invalid JSON" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_delete_config(self, auth_client: AsyncClient):
+        create_resp = await auth_client.post("/configs", json={
+            "name": "To Delete",
+            "config_data": '{}'
+        })
+        config_id = create_resp.json()["id"]
+        
+        response = await auth_client.delete(f"/configs/{config_id}")
+        assert response.status_code == 204
+        
+        # Verify it's gone
+        response = await auth_client.get(f"/configs/{config_id}")
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_user_isolation(self, auth_client: AsyncClient):
+        """Ensure users can only see their own configs."""
+        create_resp = await auth_client.post("/configs", json={
+            "name": "User 1 Config",
+            "config_data": '{}'
+        })
+        config_id = create_resp.json()["id"]
+        
+        # Create a second user in database
+        from app.core.database import SessionLocal
+        from app.core.models import User
+        db = SessionLocal()
+        try:
+            user2 = db.query(User).filter(User.id == 2).first()
+            if not user2:
+                user2 = User(
+                    id=2,
+                    keycloak_id="test-keycloak-id-2",
+                    username="testuser2",
+                    email="test2@example.com",
+                    roles='["viewer"]'
+                )
+                db.add(user2)
+                db.commit()
+                db.refresh(user2)
+        finally:
+            db.close()
+        
+        # Create a second user token
+        from app.core.auth import AuthService
+        from unittest.mock import MagicMock
+        
+        mock_user2 = MagicMock(spec=User)
+        mock_user2.id = 2
+        mock_user2.username = "testuser2"
+        mock_user2.email = "test2@example.com"
+        mock_user2.get_roles.return_value = ["viewer"]
+        
+        token2 = AuthService.create_access_token(mock_user2)
+        client2 = AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
+        client2.headers.update({"Authorization": f"Bearer {token2}"})
+        
+        # User 2 should not see User 1's config
+        response = await client2.get("/configs")
+        assert response.status_code == 200
+        assert response.json()["total"] == 0
+        
+        # User 2 should not be able to access User 1's config
+        response = await client2.get(f"/configs/{config_id}")
+        assert response.status_code == 404
+        
+        await client2.aclose()
+
 class TestAuthService:
     @pytest.mark.asyncio
     async def test_decode_session_token_valid(self):
