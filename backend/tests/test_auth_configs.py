@@ -85,8 +85,9 @@ class TestConfigCRUD:
     @pytest.fixture(autouse=True)
     async def cleanup_db(self):
         """Clean up database before each test."""
-        from app.core.database import SessionLocal
+        from app.core.database import SessionLocal, init_db
         from app.core.models import AgentConfig, User
+        init_db()
         db = SessionLocal()
         try:
             db.query(AgentConfig).delete()
