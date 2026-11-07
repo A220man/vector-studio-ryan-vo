@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime
 import json
@@ -18,11 +18,30 @@ class ConfigCreate(BaseModel):
     description: str = ""
     config_data: str
 
+    @field_validator('config_data')
+    @classmethod
+    def validate_config_data(cls, v: str) -> str:
+        try:
+            json.loads(v)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"config_data must be valid JSON: {e}")
+        return v
+
 
 class ConfigUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     config_data: Optional[str] = None
+
+    @field_validator('config_data')
+    @classmethod
+    def validate_config_data(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            try:
+                json.loads(v)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"config_data must be valid JSON: {e}")
+        return v
 
 
 class ConfigResponse(BaseModel):

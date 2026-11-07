@@ -40,7 +40,7 @@ export function Configs() {
       setFormData({ name: '', description: '', config_data: '' })
       fetchConfigs()
     } catch (err) {
-      setError('Failed to save configuration')
+      setError(err instanceof Error ? err.message : 'Failed to save configuration')
     }
   }
 
@@ -127,6 +127,9 @@ export function Configs() {
                 style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
                 required
               />
+              <p className="form-hint" style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', marginTop: '0.25rem' }}>
+                Must be valid JSON. Example: {"model": "gpt-4", "temperature": 0.7}
+              </p>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button type="submit" className="btn btn-primary">{editingConfig ? 'Update' : 'Create'}</button>
