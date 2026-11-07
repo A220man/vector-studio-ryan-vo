@@ -1,9 +1,20 @@
 # Changelog
 
-## 1.3.0 — work-in-progress checkpoint
+## 1.4.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
 
+## 1.3.0 — work-in-progress checkpoint
+
+### Added
+- JSON validation for agent configuration `config_data` field (Pydantic field_validator on create/update)
+- Improved API error handling: validation error details now surfaced to frontend
+- Frontend form hint for JSON format requirement
+
+### Fixed
+- Generic "Failed to save configuration" error now shows actual validation message
+
+Partial code published for continued development. Known issues: STATUS.md.
 ## 1.2.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.

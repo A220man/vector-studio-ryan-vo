@@ -28,12 +28,21 @@ async function request<T>(
   })
 
   if (!response.ok) {
+    let errorMessage = `API error: ${response.status}`
+    try {
+      const errorData = await response.json()
+      if (errorData.detail) {
+        errorMessage = errorData.detail
+      }
+    } catch {
+      // Ignore JSON parse errors
+    }
     if (response.status === 401) {
       sessionStorage.removeItem('user')
       sessionStorage.removeItem('access_token')
       window.location.href = '/login'
     }
-    throw new Error(`API error: ${response.status}`)
+    throw new Error(errorMessage)
   }
 
   return response.json()
