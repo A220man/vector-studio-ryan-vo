@@ -1,10 +1,17 @@
 # Changelog
 
-## 1.4.0 — work-in-progress checkpoint
+## 1.5.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
 
-## 1.3.0 — work-in-progress checkpoint
+## 1.4.0 — work-in-progress checkpoint
+
+### Fixed
+- Backend tests: Updated invalid JSON tests to expect Pydantic v2's 422 status code and error detail format
+- Frontend build: Fixed JSX parsing error in Configs component JSON example hint
+- All 20 backend tests and 2 frontend tests now pass
+
+Partial code published for continued development. Known issues: STATUS.md.
 
 ### Added
 - JSON validation for agent configuration `config_data` field (Pydantic field_validator on create/update)
