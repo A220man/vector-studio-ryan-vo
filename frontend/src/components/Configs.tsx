@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { configApi, AgentConfig } from '../api/client'
+const JSON_EXAMPLE = '{"model": "gpt-4", "temperature": 0.7}'
 export function Configs() {
   const [configs, setConfigs] = useState<AgentConfig[]>([])
   const [loading, setLoading] = useState(true)
@@ -128,7 +129,7 @@ export function Configs() {
                 required
               />
               <p className="form-hint" style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', marginTop: '0.25rem' }}>
-                Must be valid JSON. Example: {"model": "gpt-4", "temperature": 0.7}
+                Must be valid JSON. Example: {JSON_EXAMPLE}
               </p>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>

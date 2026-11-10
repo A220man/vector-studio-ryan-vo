@@ -169,10 +169,10 @@ class TestConfigCRUD:
             "name": "Test Config",
             "config_data": "not valid json"
         })
-        assert response.status_code == 400
-        assert "Invalid JSON" in response.json()["detail"]
-
-    @pytest.mark.asyncio
+        assert response.status_code == 422
+        detail = response.json()["detail"]
+        assert isinstance(detail, list)
+        assert any("config_data must be valid JSON" in str(err.get("msg", "")) for err in detail)
     async def test_list_configs(self, auth_client: AsyncClient):
         # Create a few configs
         await auth_client.post("/configs", json={
@@ -303,10 +303,10 @@ class TestConfigCRUD:
         response = await auth_client.put(f"/configs/{config_id}", json={
             "config_data": "invalid json"
         })
-        assert response.status_code == 400
-        assert "Invalid JSON" in response.json()["detail"]
-
-    @pytest.mark.asyncio
+        assert response.status_code == 422
+        detail = response.json()["detail"]
+        assert isinstance(detail, list)
+        assert any("config_data must be valid JSON" in str(err.get("msg", "")) for err in detail)
     async def test_delete_config(self, auth_client: AsyncClient):
         create_resp = await auth_client.post("/configs", json={
             "name": "To Delete",
