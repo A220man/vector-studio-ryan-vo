@@ -38,13 +38,17 @@ Tests: `backend/tests/test_auth_configs.py`, `frontend/src/App.test.tsx`
 
 ### agent-config-manager — AI agent configuration management (core domain engine)
 
-Status: planned
+Status: done
 
 Acceptance:
 - Create/read/update/delete agent configurations
 - Validate hook schemas and configurations
 - Import/export configurations
 - Search and filter configurations
+
+Implementation: `backend/app/core/models.py - AgentConfig model`, `backend/app/api/configs.py - CRUD endpoints with validation`, `backend/tests/test_auth_configs.py - TestConfigCRUD tests`
+
+Tests: `backend/tests/test_auth_configs.py::TestConfigCRUD::test_create_config`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_create_config_invalid_json`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_list_configs`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_list_configs_with_search`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_list_configs_pagination`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_get_config`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_get_config_not_found`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_update_config`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_update_config_partial`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_update_config_invalid_json`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_delete_config`, `backend/tests/test_auth_configs.py::TestConfigCRUD::test_user_isolation`
 
 ### hook-validation-engine — Hook schema validation engine
 
