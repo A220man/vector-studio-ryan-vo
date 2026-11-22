@@ -8,7 +8,7 @@ import json
 from app.core.database import get_db
 from app.core.models import AgentConfig, User
 from app.api.auth import get_current_user_dependency
-
+from app.core.hook_validation import validate_hook_schema
 
 router = APIRouter(prefix="/configs", tags=["configs"])
 
@@ -175,3 +175,78 @@ async def delete_config(
     
     db.delete(config)
     db.commit()
+
+
+class HookSchema(BaseModel):
+    """Schema definition for an agent hook configuration."""
+
+    name: str
+    description: str = ""
+    event: str  # e.g., on_start, on_end, on_error, on_success, on_step, on_step_end
+    config: dict  # JSON hook configuration
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("event")
+    @classmethod
+    def validate_event(cls, v: str) -> str:
+        valid = {
+            "on_start",
+            "on_end",
+            "on_error",
+            "on_success",
+            "on_step",
+            "on_step_end",
+        }
+        if v not in valid:
+            raise ValueError(
+                f"Invalid hook event: {v}. Valid events: {', '.join(sorted(valid))}"
+            )
+        return v
+
+    @field_validator("config")
+    @classmethod
+    def validate_config_no_crlf(cls, v: dict) -> dict:
+        # Check for CRLF in the config JSON string representation
+        raw = json.dumps(v, ensure_ascii=False)
+        if "\r\n" in raw:
+            raise ValueError("Hook config contains CRLF line endings")
+        return v
+
+
+class HookSchemaListResponse(BaseModel):
+    items: list[HookSchema]
+
+
+@router.post("/{config_id}/validate", response_model=dict)
+async def validate_hook_config(
+    config_id: int,
+    current_user: User = Depends(get_current_user_dependency),
+    db: Session = Depends(get_db),
+):
+    """Validate a hook schema for compliance.
+
+    Checks CRLF line endings, valid hook event names,
+    and reports actionable validation errors.
+    """
+    config = db.query(AgentConfig).filter(
+        AgentConfig.id == config_id,
+        AgentConfig.user_id == current_user.id,
+    ).first()
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+
+    try:
+        schema = json.loads(config.config_data)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid JSON in config_data: {exc}"
+        )
+
+    errors = validate_hook_schema(schema)
+    return {
+        "config_id": config.id,
+        "config_name": config.name,
+        "valid": len(errors) == 0,
+        "errors": errors,
+    }

@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.7.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
+## 1.6.1 — hook-validation-engine
+
+### Added
+- Hook schema validation engine (`app/core/hook_validation.py`)
+  - CRLF line ending detection
+  - Valid hook event name validation (on_start, on_end, on_error, on_success, on_step, on_step_end)
+  - Missing required event detection
+  - Null schema handling
+  - Report validation errors with actionable messages
+
+### Changed
+- `app/api/configs.py`: Added `HookSchema` Pydantic model, `validate_hook_schema` import, and `POST /configs/{config_id}/validate` endpoint
+- `app/core/models.py`: Added `HookSchema` SQLAlchemy model
+- `backend/tests/test_auth_configs.py`: Added `TestHookValidation` class with 6 test cases
+
+### Fixed
+- None
+# Changelog
+
 ## 1.6.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
