@@ -38,3 +38,14 @@ class AgentConfig(Base):
     config_data = Column(Text, nullable=False)  # JSON config
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class HookSchema(Base):
+    __tablename__ = "hook_schemas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, default="")
+    event = Column(String(100), nullable=False)  # e.g., on_start, on_end
+    config = Column(Text, nullable=False)  # JSON hook configuration
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
