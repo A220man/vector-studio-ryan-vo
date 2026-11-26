@@ -1,6 +1,6 @@
 [project]
 name = "vector-studio-ryan-vo"
-version = "1.7.0"
+version = "1.8.0"
 description = "AI Agent Configuration Manager - Vector Studio"
 readme = "README.md"
 requires-python = ">=3.12"
