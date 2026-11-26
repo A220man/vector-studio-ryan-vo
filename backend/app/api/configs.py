@@ -25,6 +25,9 @@ class ConfigCreate(BaseModel):
             json.loads(v)
         except json.JSONDecodeError as e:
             raise ValueError(f"config_data must be valid JSON: {e}")
+        errors = validate_hook_schema(v)
+        if errors:
+            raise ValueError("; ".join(errors))
         return v
 
 
@@ -41,6 +44,9 @@ class ConfigUpdate(BaseModel):
                 json.loads(v)
             except json.JSONDecodeError as e:
                 raise ValueError(f"config_data must be valid JSON: {e}")
+            errors = validate_hook_schema(v)
+            if errors:
+                raise ValueError("; ".join(errors))
         return v
 
 
@@ -94,12 +100,6 @@ async def create_config(
     db: Session = Depends(get_db),
 ):
     """Create a new agent configuration."""
-    # Validate JSON
-    try:
-        json.loads(data.config_data)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON in config_data")
-    
     config = AgentConfig(
         user_id=current_user.id,
         name=data.name,
@@ -148,10 +148,6 @@ async def update_config(
     if data.description is not None:
         config.description = data.description
     if data.config_data is not None:
-        try:
-            json.loads(data.config_data)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Invalid JSON in config_data")
         config.config_data = data.config_data
     
     db.commit()
